@@ -4,32 +4,32 @@ import { extractElement } from "./utils";
 import { Server } from "./setupServer";
 import { exportToExcelFile } from "./utils/exportToFile";
 import { requestSchema, validationRequest } from "./utils/validationRequest";
+import { IClientRequest, StringHTML } from "./types";
+import { SERVER } from "./constants";
 
 const app: Express = express();
 const CrawlServer = new Server(app);
 CrawlServer.start();
-const port: number = 8000;
-export type StringHTML = string;
-
 app.post(
   "/",
   //@ts-ignore
   validationRequest(requestSchema),
   async (req: Request, res: Response, next: NextFunction) => {
-    const clientRequest = req.body;
+    const clientRequest: IClientRequest = req.body;
     const domain = new URL(clientRequest.url).hostname;
     const HTMLlistItems: StringHTML = await fetchData(clientRequest.url, next);
     const extractLinkListItems: StringHTML[] =
-      extractElement(HTMLlistItems, {
-        elementNeedExtractFromHTML: clientRequest.classHrefElement,
-        typeNeedExtract: "href",
+      (extractElement(HTMLlistItems, {
+        classOfElementNeedExtractFromHTML: clientRequest.classHrefElement,
+        onlyExtractLink: true,
         domain,
-      }) || [];
+      }) as StringHTML[]) || [];
     const ListHTMLItems: StringHTML[] =
       (await fetchMultipleData(extractLinkListItems, next)) || [];
     const endData = ListHTMLItems.map((HTMLItem: StringHTML) => {
       return extractElement(HTMLItem, {
-        elementNeedExtractFromHTML: clientRequest.getFields,
+        classOfElementNeedExtractFromHTML: clientRequest.getFields,
+        onlyExtractLink: false,
       });
     });
     const excelFile = exportToExcelFile(endData, clientRequest.getFields);
@@ -45,6 +45,6 @@ app.post(
   }
 );
 
-app.listen(port, () => {
+app.listen(SERVER.PORT, () => {
   console.log("server running on port 8000");
 });

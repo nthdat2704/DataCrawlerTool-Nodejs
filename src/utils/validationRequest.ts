@@ -1,3 +1,4 @@
+//@ts-nocheck
 import { NextFunction } from "express";
 import * as yup from "yup";
 export const requestSchema = yup.object({
@@ -12,7 +13,7 @@ export const requestSchema = yup.object({
       "Tên (class || id || attribute,...) của element cần crawl không được để trống"
     ),
   getFields: yup
-    .object()
+    .array()
     .nonNullable()
     .required("Các field dữ liệu cần crawl không được để trống"),
 });
@@ -23,7 +24,6 @@ export const validationRequest =
       await schema.validate(req.body);
       return next();
     } catch (err) {
-      //@ts-ignore
       return res.status(500).json({ type: err.name, message: err.message });
     }
   };

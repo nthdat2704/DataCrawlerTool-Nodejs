@@ -1,35 +1,62 @@
 import * as cheerio from "cheerio";
-import { StringHTML } from "../app";
-import { convertObjToArr } from "./convertObjToArr";
+import { IGetFields, StringHTML } from "../types";
+import { TYPE_EXTRACT, ATTRIBUTES } from "../constants";
 interface options {
-  elementNeedExtractFromHTML: string | {};
-  typeNeedExtract?: "href" | "text";
+  classOfElementNeedExtractFromHTML: string | IGetFields[];
+  onlyExtractLink?: boolean;
   domain?: string;
 }
+
 export const extractElement = (HTMLfile: StringHTML, options: options) => {
   if (!HTMLfile) return "";
   const {
-    elementNeedExtractFromHTML,
-    typeNeedExtract = "text",
+    classOfElementNeedExtractFromHTML,
+    onlyExtractLink = false,
     domain,
   } = options;
-  const listElement: string[] = [];
   const $: cheerio.CheerioAPI = cheerio.load(HTMLfile);
-  if (typeof elementNeedExtractFromHTML === "string") {
-    $(elementNeedExtractFromHTML as string).map(function () {
-      if (typeNeedExtract === "text") {
-        $(this).text();
-        return "";
+
+  const handleTypeNeedExtract = (
+    type: string | boolean,
+    context: cheerio.AnyNode
+  ) => {
+    if (type === TYPE_EXTRACT._HREF || type === true) {
+      return $(context).attr(ATTRIBUTES._HREF);
+    }
+    if (type === TYPE_EXTRACT._TEXT) {
+      return $(context).text();
+    }
+    if (type === TYPE_EXTRACT._HTML) {
+      return $(context).html();
+    }
+    if (type === TYPE_EXTRACT._IMG) {
+      let attribute = ATTRIBUTES._SRC;
+      let img = $(context).attr(attribute);
+      if (!img) {
+        attribute = ATTRIBUTES._SRCSET;
+        img = $(context).attr(attribute);
       }
-      const link = `https://${domain}${$(this).attr("href")}`;
-      listElement.push(link);
+      return img;
+    }
+  };
+
+  if (onlyExtractLink) {
+    const storelistLinksElement: string[] = [];
+    $(classOfElementNeedExtractFromHTML as string).map(function () {
+      const link = handleTypeNeedExtract(onlyExtractLink, this);
+      const fullLink = `https://${domain}${link}`;
+      storelistLinksElement.push(fullLink);
     });
-    return listElement;
+    return storelistLinksElement;
   }
-  const convertToArray = convertObjToArr(elementNeedExtractFromHTML);
-  const objectData: any = {};
-  convertToArray.map((item) => {
-    objectData[item[0]] = $(item[1] as string).text();
+  let storeDataField: Record<string, any> = {};
+  let dataField: any;
+  const data = classOfElementNeedExtractFromHTML as IGetFields[];
+  data.map((field: IGetFields) => {
+    $(field.class as string).map(function () {
+      dataField = handleTypeNeedExtract(field.type, this);
+    });
+    storeDataField[field.name] = dataField;
   });
-  return objectData;
+  return storeDataField;
 };
