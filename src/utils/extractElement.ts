@@ -1,11 +1,13 @@
 import * as cheerio from "cheerio";
 import { StringHTML } from "../app";
+import { convertObjToArr } from "./convertObjToArr";
 interface options {
   elementNeedExtractFromHTML: string | {};
   typeNeedExtract?: "href" | "text";
   domain?: string;
 }
 export const extractElement = (HTMLfile: StringHTML, options: options) => {
+  if (!HTMLfile) return "";
   const {
     elementNeedExtractFromHTML,
     typeNeedExtract = "text",
@@ -24,9 +26,8 @@ export const extractElement = (HTMLfile: StringHTML, options: options) => {
     });
     return listElement;
   }
-  const convertToArray = Object.entries(elementNeedExtractFromHTML);
+  const convertToArray = convertObjToArr(elementNeedExtractFromHTML);
   const objectData: any = {};
-
   convertToArray.map((item) => {
     objectData[item[0]] = $(item[1] as string).text();
   });
