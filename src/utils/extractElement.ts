@@ -53,6 +53,10 @@ export const extractElement = (HTMLfile: StringHTML, options: options) => {
   let dataField: any;
   const data = classOfElementNeedExtractFromHTML as IGetFields[];
   data.map((field: IGetFields) => {
+    if (!field.class) {
+      storeDataField[field.name] = "";
+      return "";
+    }
     $(field.class as string).map(function () {
       dataField = handleTypeNeedExtract(field.type, this);
     });

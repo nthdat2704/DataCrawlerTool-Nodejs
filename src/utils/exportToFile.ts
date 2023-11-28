@@ -1,7 +1,8 @@
+import { IGetFields } from "../types";
 import { convertObjToArr } from "./convertObjToArr";
 
 const ExcelJS = require("exceljs");
-export const exportToExcelFile = (data: any[], columns: {}) => {
+export const exportToExcelFile = (data: any[], columns: IGetFields[]) => {
   try {
     //to create a excel file
     // 1. create a excel file
@@ -10,17 +11,16 @@ export const exportToExcelFile = (data: any[], columns: {}) => {
     // 4. insert data into rows depend on column name
     let excelFile = new ExcelJS.Workbook();
     const sheetFile = excelFile.addWorksheet("CrawlData");
-    const ArrColumn = convertObjToArr(columns);
-    const totalColumns: any[] = [
+    const totalColumns: Record<string, string>[] = [
       {
         header: "id",
         key: "id",
       },
     ];
-    ArrColumn.forEach((element: any, index) => {
+    columns.forEach((element: any) => {
       totalColumns.push({
-        header: element[0],
-        key: element[0],
+        header: element.name,
+        key: element.name,
       });
     });
     sheetFile.columns = totalColumns;
